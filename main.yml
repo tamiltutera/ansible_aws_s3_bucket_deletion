@@ -1,0 +1,41 @@
+---
+- name: Manage s3 bucket objects
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - secrets.yml
+  vars:
+    bucket_name: "my-tamiltutera-s3-bucket"
+    region: "us-east-1"
+    local_file_path: "~/ansible_aws_s3_obj_download/secrets.yml"
+    s3_object_key: "vault.yml"
+  tasks:
+    - name: Delete Object from S3 Bucket
+      amazon.aws.aws_s3:
+        bucket: "{{ bucket_name }}"
+        object: "{{ s3_object_key }}"
+        mode: delobj
+        region: "{{ region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+      register: delete_s3_object
+    
+    - debug:
+        msg: "{{ delete_s3_object }}"
+    - debug:
+        msg: "{{ s3_object_key }} object has been deleted successfully."
+      when: delete_s3_object.changed
+    - name: Delete a bucket and all contents
+      amazon.aws.s3_bucket:
+        name: "{{ bucket_name }}"
+        state: absent
+        force: true
+        region: "{{ region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+      register: delete_s3_bucket
+    - debug:
+        msg: "{{ delete_s3_bucket }}"
+    - debug:
+        msg: "{{ bucket_name }} bucket has been deleted successfully."
+      when: delete_s3_bucket.changed
